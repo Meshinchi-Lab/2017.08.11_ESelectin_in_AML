@@ -1,0 +1,99 @@
+---
+title: "E Selectin In TARGET AML"
+author: "Jenny Smith"
+date: "August 11, 2017"
+output: html_document
+---
+
+```{r setup}
+library(knitr)
+knitr::opts_chunk$set(tidy.opts=list(width.cutoff=50),tidy=TRUE, fig.align='center', fig.height = 4, fig.width = 6)
+knitr::opts_knit$set(root.dir = '~/RNA_seq_Analysis/2017.08.11_ESelectin_in_AML/')
+```
+
+
+```{r message = FALSE, warning=FALSE}
+library(stringr)
+library(dplyr)
+library(ggplot2)
+library(magrittr)
+library(reshape2)
+library(dplyr)
+getwd()
+```
+
+```{r}
+source("~/scripts/RNAseq_Analysis/MSLN_waterfallplots/Waterfall_Barplot_Function_2017.05.22.r")
+source("~/scripts/RNAseq_Analysis/DifferentialExpn_PathwayAnalysis/rmDupGenes_Function.r")
+```
+
+
+#Read in the Expression Data
+```{r}
+TPM <- read.csv("TARGET_AML_LD_HD_MergedTPM.csv", stringsAsFactors = FALSE)
+dim(TPM)
+```
+
+```{r}
+head(TPM[,1:5])
+```
+
+```{r}
+#remove duplicate gene names and set rownames
+TPM <- TPM[,-1]
+TPM <- rmDupGenes(TPM, "geneSymbol")
+dim(TPM$remDups)
+```
+
+#Cohort Information 
+```{r}
+cohort <- read.csv("TARGET_AML_Log2Ratios_MergedTPM_PatientUSI_27June2017.csv", stringsAsFactors = FALSE, row.names = 1)
+dim(cohort)
+```
+
+```{r}
+head(cohort)
+```
+
+There is an inhibitor for this target. looking for the expression in AML. 
+
+#Waterfall plot
+
+```{r}
+phenoVector <- cohort$Cohort %>% set_names(rownames(cohort))
+# log2 <- log2(TPM$remDups + 1)
+# pdf(file="TARGET_AML_E-Selectin_TPM_Waterfallplot.pdf")
+waterfallPlot(TPM$remDups,"SELE", phenoVector = phenoVector, unit="TPM", BM=TRUE) + labs(title="E-Selectin in TARGET AML")
+# dev.off()
+```
+
+#histogram 
+
+```{r}
+SELE <- t(log2(TPM$remDups["SELE", ] + 1))
+# pdf(file="TARGET_AML_E-Selectin_TPM_Histogram.pdf")
+hist(SELE, col = "blue", xlab = "Log2 TPM")
+# dev.off()
+```
+
+```{r}
+#check for alias. 
+which(rownames(TPM$remDups) %in% c("ELAM1", "LECAM2", "ELAM","CD62E", "ESEL"))
+```
+
+#Session Information
+
+```{r}
+sessionInfo()
+```
+
+#Notes:
+
+
+I would like to use dplyr to group the waterfall plots by cytogenetic group as well. in the future. 
+
+https://stackoverflow.com/questions/29034863/apply-a-ggplot-function-per-group-with-dplyr-and-set-title-per-group
+iris %>% group_by(Species) %>% do(plots=ggplot(data=.) +
+         aes(x=Petal.Width, y=Petal.Length) + geom_point() + ggtitle(unique(.$Species)))
+         
+
